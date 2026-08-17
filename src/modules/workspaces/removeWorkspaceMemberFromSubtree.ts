@@ -1,7 +1,7 @@
 import { SublayHttpClient } from "../../core/client";
-import { RemoveFromSubtreeResponse } from "../../interfaces/Workspace";
+import { RemoveWorkspaceMemberFromSubtreeResponse } from "../../interfaces/Workspace";
 
-export interface RemoveFromSubtreeProps {
+export interface RemoveWorkspaceMemberFromSubtreeProps {
   workspaceId: string;
   // The user to offboard from this node and every descendant (path param).
   targetUserId: string;
@@ -15,13 +15,13 @@ export interface RemoveFromSubtreeProps {
  * descendant. Blocks (409 `workspace/owns-descendants`) with a report if the
  * user OWNS any descendant workspace — transfer or delete those first.
  */
-export async function removeFromSubtree(
+export async function removeWorkspaceMemberFromSubtree(
   client: SublayHttpClient,
-  data: RemoveFromSubtreeProps
-): Promise<RemoveFromSubtreeResponse> {
+  data: RemoveWorkspaceMemberFromSubtreeProps
+): Promise<RemoveWorkspaceMemberFromSubtreeResponse> {
   const { workspaceId, targetUserId, userId } = data;
   const response =
-    await client.projectInstance.post<RemoveFromSubtreeResponse>(
+    await client.projectInstance.post<RemoveWorkspaceMemberFromSubtreeResponse>(
       `/workspaces/${workspaceId}/members/${targetUserId}/remove-from-subtree`,
       { userId }
     );

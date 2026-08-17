@@ -1,23 +1,23 @@
 import { SublayHttpClient } from "../../core/client";
 
-export interface DeclineInviteProps {
+export interface DeclineWorkspaceInviteProps {
   inviteId: string;
   // The declining user (must BE the invite's target). Not verification-gated.
   // Required for the service key (act-as-user).
   userId: string;
 }
 
-export interface DeclineInviteResponse {
+export interface DeclineWorkspaceInviteResponse {
   success: boolean;
 }
 
 /** Decline an invitation — identity-matched (not verification-gated). */
-export async function declineInvite(
+export async function declineWorkspaceInvite(
   client: SublayHttpClient,
-  data: DeclineInviteProps
-): Promise<DeclineInviteResponse> {
+  data: DeclineWorkspaceInviteProps
+): Promise<DeclineWorkspaceInviteResponse> {
   const { inviteId, userId } = data;
-  const response = await client.projectInstance.post<DeclineInviteResponse>(
+  const response = await client.projectInstance.post<DeclineWorkspaceInviteResponse>(
     `/workspace-invites/${inviteId}/decline`,
     { userId }
   );

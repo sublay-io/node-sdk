@@ -148,7 +148,7 @@ export interface WorkspaceAuthority {
 }
 
 // Subtree-offboarding response (`POST /members/:userId/remove-from-subtree`).
-export interface RemoveFromSubtreeResponse {
+export interface RemoveWorkspaceMemberFromSubtreeResponse {
   removedCount: number;
   removed: { workspaceId: string; userId: string }[];
 }

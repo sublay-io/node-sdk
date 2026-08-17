@@ -161,7 +161,7 @@ export type {
   WorkspaceRosterCountsResponse,
   WorkspaceMemberStanding,
   WorkspaceAuthority,
-  RemoveFromSubtreeResponse,
+  RemoveWorkspaceMemberFromSubtreeResponse,
 } from "./interfaces/Workspace";
 export type { Rule } from "./interfaces/Rule";
 export type { Follow } from "./interfaces/Follow";
