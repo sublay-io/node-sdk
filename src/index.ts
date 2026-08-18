@@ -159,6 +159,7 @@ export type {
   WorkspaceRosterEntry,
   WorkspaceRosterResponse,
   WorkspaceRosterCountsResponse,
+  WorkspaceStandingUser,
   WorkspaceMemberStanding,
   WorkspaceAuthority,
   RemoveWorkspaceMemberFromSubtreeResponse,
