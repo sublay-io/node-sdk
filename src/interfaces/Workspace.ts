@@ -40,10 +40,22 @@ export type WorkspaceAuthorityReason =
 // present on `ancestor-owner` / `reach-holder` only (`owner` / `member` are
 // grants on the target workspace itself). A user may carry SEVERAL entries of
 // the same type — one per granting ancestor.
-export interface WorkspaceAuthorityReasonDetail {
-  type: WorkspaceAuthorityReason;
-  viaWorkspaceId?: string;
-}
+//
+// Modelled as a discriminated union so `type` narrows `viaWorkspaceId`: the two
+// ancestor-derived reasons ALWAYS carry it and the two target-local reasons
+// NEVER do — those are the only four combinations the server emits (see
+// `resolveWorkspaceAuthority`).
+export type WorkspaceAuthorityReasonDetail =
+  | {
+      // A grant on the target workspace itself — no ancestor is responsible.
+      type: "owner" | "member";
+      viaWorkspaceId?: never;
+    }
+  | {
+      // A grant derived from an ancestor, which `viaWorkspaceId` names.
+      type: "ancestor-owner" | "reach-holder";
+      viaWorkspaceId: string;
+    };
 
 export interface Workspace {
   id: string;
@@ -180,17 +192,28 @@ export interface WorkspaceAuthority {
  * One descendant the subtree sweep did NOT clear, where the target user still
  * holds a direct membership.
  *
- * `id` / `name` are `null` when the acting user has no standing on that
- * workspace — the sweep reports THAT a membership survived without disclosing
- * the existence or name of a sealed sub-workspace the actor has no authority
- * over (the same sealing fence the descendant roster read applies).
+ * `id` / `name` are masked TOGETHER: an entry the acting user may see carries
+ * both, and one they may not carries `null` for both — the sweep reports THAT a
+ * membership survived without disclosing the existence or name of a sealed
+ * sub-workspace the actor has no authority over (the same sealing fence the
+ * descendant roster read applies). Modelled as a discriminated union so a
+ * `null` check on `id` narrows `name` too.
  */
-export interface SkippedWorkspace {
-  id: string | null;
-  name: string | null;
-  /** Why it was skipped. `out-of-reach`: the actor's authority does not extend there. */
-  reason: "out-of-reach";
-}
+export type SkippedWorkspace =
+  | {
+      // Visible: the actor has standing on this workspace.
+      id: string;
+      name: string;
+      /** Why it was skipped. `out-of-reach`: the actor's authority does not extend there. */
+      reason: "out-of-reach";
+    }
+  | {
+      // Sealed: the actor has no standing there, so its identity is withheld.
+      id: null;
+      name: null;
+      /** Why it was skipped. `out-of-reach`: the actor's authority does not extend there. */
+      reason: "out-of-reach";
+    };
 
 // Subtree-offboarding response (`POST /members/:userId/remove-from-subtree`).
 export interface RemoveWorkspaceMemberFromSubtreeResponse {
