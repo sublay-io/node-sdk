@@ -164,6 +164,7 @@ export type {
   WorkspaceMemberStanding,
   WorkspaceAuthority,
   RemoveWorkspaceMemberFromSubtreeResponse,
+  SkippedWorkspace,
 } from "./interfaces/Workspace";
 export type { Rule } from "./interfaces/Rule";
 export type { Follow } from "./interfaces/Follow";
