@@ -2,7 +2,8 @@ import { SublayHttpClient } from "../../core/client";
 
 export interface DeclineWorkspaceInviteProps {
   inviteId: string;
-  // The declining user (must BE the invite's target). Not verification-gated.
+  // The declining user (must BE the invite's target, and must be verified —
+  // a service key does NOT bypass the verified-email gate).
   // Required for the service key (act-as-user).
   userId: string;
 }
@@ -11,7 +12,7 @@ export interface DeclineWorkspaceInviteResponse {
   success: boolean;
 }
 
-/** Decline an invitation — identity-matched (not verification-gated). */
+/** Decline an invitation — identity-matched + verified-email-gated (same as accept). */
 export async function declineWorkspaceInvite(
   client: SublayHttpClient,
   data: DeclineWorkspaceInviteProps

@@ -14,7 +14,7 @@ export interface FetchMyWorkspaceInvitesResponse {
 /**
  * The user's LIVE pending invites (`status='pending' AND expiresAt > now`),
  * matched by `userId`. Surfacing is NOT verification-gated (the verified check
- * applies only at accept).
+ * applies when the user ACTS on an invite — accept or decline).
  */
 export async function fetchMyWorkspaceInvites(
   client: SublayHttpClient,
