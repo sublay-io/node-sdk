@@ -51,3 +51,26 @@ export type MuteDuration = (typeof MUTE_DURATIONS)[number];
 export interface NotificationPreferences {
   disabledTypes: PushEventType[];
 }
+
+/** A Web Push subscription, exactly as `PushManager.subscribe()` returns it. */
+export interface WebPushSubscription {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
+
+/**
+ * Identifies one physical device. Mirrors the server's device-identifier body
+ * exactly (server `src/v7/validation/push-notifications/push-notifications.schema.ts`):
+ * a provider token for `ios`/`android`, a Web Push subscription for `web`. The
+ * union encodes the server's own cross-check — it rejects the same
+ * combinations the server's `superRefine` rejects.
+ *
+ * Passed to `auth.signOut` to unbind that device's push binding in the same
+ * transaction as the sign-out.
+ */
+export type PushDeviceIdentifier =
+  | { platform: "ios" | "android"; token: string }
+  | { platform: "web"; subscription: WebPushSubscription };

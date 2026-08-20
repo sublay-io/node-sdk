@@ -39,6 +39,34 @@ describe("node-sdk auth — request shaping", () => {
     });
   });
 
+  it("signOut forwards the optional device identifier for atomic push deregistration", async () => {
+    const { client, projectInstance } = makeClient();
+    await signOut(client, {
+      refreshToken: "rt1",
+      device: { platform: "android", token: "device-token-1" },
+    });
+    expect(projectInstance.post).toHaveBeenCalledWith("/auth/sign-out", {
+      refreshToken: "rt1",
+      device: { platform: "android", token: "device-token-1" },
+    });
+  });
+
+  it("signOut forwards a web device identifier as a subscription", async () => {
+    const { client, projectInstance } = makeClient();
+    const subscription = {
+      endpoint: "https://push.example/abc",
+      keys: { p256dh: "p", auth: "a" },
+    };
+    await signOut(client, {
+      refreshToken: "rt1",
+      device: { platform: "web", subscription },
+    });
+    expect(projectInstance.post).toHaveBeenCalledWith("/auth/sign-out", {
+      refreshToken: "rt1",
+      device: { platform: "web", subscription },
+    });
+  });
+
   it("requestNewAccessToken posts the full body to /auth/request-new-access-token", async () => {
     const { client, projectInstance } = makeClient();
     await requestNewAccessToken(client, { refreshToken: "rt1" });
