@@ -16,7 +16,7 @@ export interface SignOutProps {
    *
    * Omit it and the request is byte-identical to before this field existed.
    */
-  device?: PushDeviceIdentifier;
+  pushDevice?: PushDeviceIdentifier;
 }
 
 export async function signOut(

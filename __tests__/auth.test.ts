@@ -39,19 +39,19 @@ describe("node-sdk auth — request shaping", () => {
     });
   });
 
-  it("signOut forwards the optional device identifier for atomic push deregistration", async () => {
+  it("signOut forwards the optional pushDevice identifier for atomic push deregistration", async () => {
     const { client, projectInstance } = makeClient();
     await signOut(client, {
       refreshToken: "rt1",
-      device: { platform: "android", token: "device-token-1" },
+      pushDevice: { platform: "android", token: "device-token-1" },
     });
     expect(projectInstance.post).toHaveBeenCalledWith("/auth/sign-out", {
       refreshToken: "rt1",
-      device: { platform: "android", token: "device-token-1" },
+      pushDevice: { platform: "android", token: "device-token-1" },
     });
   });
 
-  it("signOut forwards a web device identifier as a subscription", async () => {
+  it("signOut forwards a web pushDevice identifier as a subscription", async () => {
     const { client, projectInstance } = makeClient();
     const subscription = {
       endpoint: "https://push.example/abc",
@@ -59,11 +59,11 @@ describe("node-sdk auth — request shaping", () => {
     };
     await signOut(client, {
       refreshToken: "rt1",
-      device: { platform: "web", subscription },
+      pushDevice: { platform: "web", subscription },
     });
     expect(projectInstance.post).toHaveBeenCalledWith("/auth/sign-out", {
       refreshToken: "rt1",
-      device: { platform: "web", subscription },
+      pushDevice: { platform: "web", subscription },
     });
   });
 
