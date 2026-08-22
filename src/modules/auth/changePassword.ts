@@ -1,4 +1,5 @@
 import { SublayHttpClient } from "../../core/client";
+import { PushDeviceIdentifier } from "../../interfaces/Push";
 
 export interface ChangePasswordProps {
   userId: string;
@@ -6,22 +7,17 @@ export interface ChangePasswordProps {
   password: string;
   newPassword: string;
   /**
-   * OPTIONAL — the session to spare, named by the refresh token that device
-   * holds.
+   * Optional. One physical device whose push binding should SURVIVE the
+   * change.
    *
-   * Changing a password destroys every token family for that user. The change
-   * route is authenticated by a service key here, so there is no "caller's
-   * session" to infer: pass the refresh token of the device that should stay
-   * signed in — typically one your own client just sent you — and its family
-   * survives while every other device must re-authenticate.
-   *
-   * Omit it and every session for the user ends, which is the right default for
-   * a server-side caller acting on someone's behalf: it usually holds no
-   * refresh token, and revoking everything is the fail-secure outcome rather
-   * than an error. A token that fails verification, or belongs to a different
-   * user, is ignored — it can never preserve someone else's session.
+   * A password change deletes every push binding the user holds, so an
+   * intruder's device stops receiving notification content. A server-side
+   * caller normally has no device to name and should omit this — every binding
+   * then goes, which is the right default when acting on someone's behalf.
+   * Supply it only when your own client told you which device it is on and you
+   * want that one to keep receiving notifications.
    */
-  refreshToken?: string;
+  pushDevice?: PushDeviceIdentifier;
 }
 
 export interface ChangePasswordResponse {
@@ -29,6 +25,14 @@ export interface ChangePasswordResponse {
   message: string;
 }
 
+/**
+ * Change a user's password.
+ *
+ * Ends every session for that user, so all their devices must sign in again
+ * with the new password. (A call made by a signed-in user with their own
+ * access token keeps that one session; a service key is not a session, so
+ * there is nothing to spare here.)
+ */
 export async function changePassword(
   client: SublayHttpClient,
   data: ChangePasswordProps

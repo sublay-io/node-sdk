@@ -113,23 +113,23 @@ describe("node-sdk auth — request shaping", () => {
     });
   });
 
-  it("changePassword FORWARDS an optional refreshToken, naming the session to spare", async () => {
-    // A password change destroys every token family for that user. A service-key
-    // caller has no session of its own to infer, so the device that should stay
-    // signed in has to be named — by the refresh token it holds. Omitting it
-    // ends every session, which is the right default here and not an error.
+  it("changePassword FORWARDS an optional pushDevice, naming the device to spare", async () => {
+    // A password change deletes every push binding that user holds. A
+    // service-key caller usually has no device to name and should omit this —
+    // but when its own client told it which handset it is on, naming that
+    // device keeps it receiving notifications while every other one goes quiet.
     const { client, projectInstance } = makeClient();
     await changePassword(client, {
       userId: "u1",
       password: "old-pw",
       newPassword: "new-pw",
-      refreshToken: "rt-of-the-device-to-keep",
+      pushDevice: { platform: "ios", token: "device-of-the-handset-to-keep" },
     });
     expect(projectInstance.post).toHaveBeenCalledWith("/auth/change-password", {
       userId: "u1",
       password: "old-pw",
       newPassword: "new-pw",
-      refreshToken: "rt-of-the-device-to-keep",
+      pushDevice: { platform: "ios", token: "device-of-the-handset-to-keep" },
     });
   });
 
