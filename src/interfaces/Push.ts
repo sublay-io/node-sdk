@@ -52,7 +52,41 @@ export interface NotificationPreferences {
   disabledTypes: PushEventType[];
 }
 
-/** A Web Push subscription, exactly as `PushManager.subscribe()` returns it. */
+/**
+ * A Web Push subscription in its SERIALIZED form — the JSON the server reads,
+ * not the live browser object.
+ *
+ * A `PushSubscription` straight from `PushManager.subscribe()` does NOT satisfy
+ * this type. It exposes its keys only through `getKey(name)`; there is no `keys`
+ * property to read, so it is not assignable here under strict TypeScript, and
+ * passing one through a cast sends a body the server rejects.
+ *
+ * To produce a value of this type:
+ *
+ * 1. **Serialize** the subscription with `subscription.toJSON()`.
+ * 2. **Confirm** `endpoint`, `keys.p256dh` and `keys.auth` are all present —
+ *    `PushSubscriptionJSON` types every one of them as optional, while the
+ *    server requires all three as non-empty strings and 400s otherwise.
+ *
+ * ```ts
+ * const json = subscription.toJSON();
+ * if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
+ *   throw new Error("Incomplete Web Push subscription");
+ * }
+ * const webPushSubscription: WebPushSubscription = {
+ *   endpoint: json.endpoint,
+ *   keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+ * };
+ * ```
+ *
+ * Mirrors the server's `webPushSubscriptionSchema`
+ * (server `src/v7/validation/push-notifications/push-notifications.schema.ts`).
+ *
+ * On this server-side SDK the value normally arrives already serialized, from
+ * the browser client that created the subscription — the steps above are what
+ * that client must do before sending it to you, and the same checks are worth
+ * repeating on receipt.
+ */
 export interface WebPushSubscription {
   endpoint: string;
   keys: {
