@@ -198,3 +198,47 @@ describe("node-sdk reputation — chat grants include", () => {
     expect(config.params.include).toBe("files,grants");
   });
 });
+
+describe("node-sdk reputation — nullability contract", () => {
+  it("pins note/spaceId as nullable and metadata as NOT nullable", async () => {
+    // COMPILE-TIME assertions, checked by ts-jest's diagnostics. The server's
+    // shared `metadataSchema` is `z.record(...).optional()` with NO
+    // `.nullable()`, while `note` and `spaceId` are `.nullable().optional()`.
+    // The `@ts-expect-error` fails this file's compile if anyone re-adds
+    // `| null` to `metadata` — a shape the server answers with
+    // 400 reputation-grant/invalid-body.
+    const { client, projectInstance } = makeClient();
+
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+      spaceId: null,
+      note: null,
+      // @ts-expect-error metadata is not nullable — omit the key instead.
+      metadata: null,
+    });
+
+    await mintGrant(client, {
+      recipientId: "recipient-1",
+      amount: 5,
+      spaceId: null,
+      note: null,
+      // @ts-expect-error metadata is not nullable — omit the key instead.
+      metadata: null,
+    });
+
+    expect(projectInstance.post).toHaveBeenCalledTimes(2);
+  });
+
+  it("omitting metadata leaves the key off the wire entirely", async () => {
+    const { client, projectInstance } = makeClient();
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+    });
+    const [, body] = projectInstance.post.mock.calls[0];
+    expect(body).not.toHaveProperty("metadata");
+  });
+});
