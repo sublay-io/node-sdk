@@ -49,6 +49,39 @@ export type ReputationGrantTargetFilter =
   | { targetType?: undefined; targetId?: undefined };
 
 /**
+ * The fields both grant WRITE bodies carry — {@link CreateGrantProps} (a
+ * debited transfer) and {@link MintGrantProps} (a mint). Shared rather than
+ * repeated so the `note`/`metadata` nullability asymmetry below is stated once
+ * and can only ever be corrected in one place.
+ *
+ * Everything that differs between the two routes stays on the route's own
+ * props: the transfer names its sender (`actingUserId`) and takes a positive
+ * amount only, while the mint has no actor and accepts any non-zero amount.
+ * This is not a wire body of its own — nothing posts a `GrantWriteCommonProps`.
+ */
+export interface GrantWriteCommonProps {
+  /**
+   * The bucket the reputation moves in — both legs on a transfer, the credited
+   * (or debited) leg on a mint. Omitted/null = the project-general bucket.
+   */
+  spaceId?: string | null;
+  /**
+   * Free-text reason. Trimmed and capped at 2000 characters server-side.
+   * Genuinely nullable — an explicit `null` is accepted and means "no note".
+   */
+  note?: string | null;
+  /**
+   * Arbitrary JSON, capped at 1 MB server-side.
+   *
+   * NOT nullable — deliberately asymmetric with `note` directly above, not a
+   * typo. The server's shared `metadataSchema` is `z.record(...).optional()`
+   * with no `.nullable()`, so an explicit `metadata: null` is rejected with
+   * `400 reputation-grant/invalid-body`. Omit the key to mean "no metadata".
+   */
+  metadata?: Record<string, any>;
+}
+
+/**
  * Per-item reputation-grant summary. Covers positive grants only — negative
  * grants (app deductions) are invisible on every public read surface.
  */

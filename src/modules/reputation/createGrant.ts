@@ -1,10 +1,11 @@
 import { SublayHttpClient } from "../../core/client";
 import {
+  GrantWriteCommonProps,
   ReputationGrant,
   ReputationGrantTargetFilter,
 } from "../../interfaces/ReputationGrant";
 
-interface CreateGrantBaseProps {
+interface CreateGrantBaseProps extends GrantWriteCommonProps {
   /**
    * The sender — the user the reputation is debited FROM. Required: a service
    * key has no session user, so the actor must be named explicitly.
@@ -21,22 +22,6 @@ interface CreateGrantBaseProps {
    * (zero) — use {@link mintGrant} to create or destroy reputation.
    */
   amount: number;
-  /** The bucket both legs move in. Omitted/null = the project-general bucket. */
-  spaceId?: string | null;
-  /**
-   * Free-text reason. Trimmed and capped at 2000 characters server-side.
-   * Genuinely nullable — an explicit `null` is accepted and means "no note".
-   */
-  note?: string | null;
-  /**
-   * Arbitrary JSON, capped at 1 MB server-side.
-   *
-   * NOT nullable — deliberately asymmetric with `note` directly above, not a
-   * typo. The server's shared `metadataSchema` is `z.record(...).optional()`
-   * with no `.nullable()`, so an explicit `metadata: null` is rejected with
-   * `400 reputation-grant/invalid-body`. Omit the key to mean "no metadata".
-   */
-  metadata?: Record<string, any>;
 }
 
 /**

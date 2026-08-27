@@ -198,6 +198,7 @@ export type {
   ReputationGrantSourceType,
   ReputationGrantTargetType,
   ReputationGrantTargetFilter,
+  GrantWriteCommonProps,
   GrantSummary,
 } from "./interfaces/ReputationGrant";
 export type { CreateGrantProps } from "./modules/reputation/createGrant";

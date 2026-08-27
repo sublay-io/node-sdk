@@ -348,6 +348,48 @@ describe("node-sdk reputation — target pair contract", () => {
     });
   });
 
+  it("rejects an explicit null target at compile time — the empty branch is undefined, not null", async () => {
+    // COMPILE-TIME assertions, same shape as the `metadata: null` pair above
+    // and for the same reason: `grantBodyFields.targetType`/`targetId` are
+    // `.optional()` with NO `.nullable()`, so `targetType: null` is answered
+    // with 400 reputation-grant/invalid-body (invalid-filter on the list), not
+    // read as "no target". The empty branch of
+    // `ReputationGrantTargetFilter` is therefore `?: undefined`, and these
+    // directives go unused — failing the compile — the moment anyone widens it
+    // to `?: null`. Omit both keys to mean "no target".
+    const { client, projectInstance } = makeClient();
+
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetType: null,
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetId: null,
+    });
+
+    await mintGrant(client, {
+      recipientId: "recipient-1",
+      amount: 5,
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetType: null,
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetId: null,
+    });
+
+    await listGrants(client, {
+      recipientId: "r1",
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetType: null,
+      // @ts-expect-error the target pair is not nullable — omit both keys.
+      targetId: null,
+    });
+
+    expect(projectInstance.post).toHaveBeenCalledTimes(2);
+    expect(projectInstance.get).toHaveBeenCalledTimes(1);
+  });
+
   it("lets a caller build the pair conditionally via the exported filter type", async () => {
     // The documented escape hatch for the one shape the union makes awkward:
     // an inline `...(item ? { targetType, targetId } : {})` widens both keys to
