@@ -1,10 +1,10 @@
 import { SublayHttpClient } from "../../core/client";
 import {
   ReputationGrant,
-  ReputationGrantTargetType,
+  ReputationGrantTargetFilter,
 } from "../../interfaces/ReputationGrant";
 
-export interface MintGrantProps {
+interface MintGrantBaseProps {
   /** The user receiving (or, with a negative amount, losing) the reputation. */
   recipientId: string;
   /**
@@ -30,10 +30,15 @@ export interface MintGrantProps {
    * `400 reputation-grant/invalid-body`. Omit the key to mean "no metadata".
    */
   metadata?: Record<string, any>;
-  /** `targetType` and `targetId` must be supplied together, or not at all. */
-  targetType?: ReputationGrantTargetType;
-  targetId?: string;
 }
+
+/**
+ * `targetType` and `targetId` are supplied together or not at all — the
+ * both-or-neither pair is carried by {@link ReputationGrantTargetFilter}, which
+ * makes the half-filled shape a compile error instead of a
+ * `400 reputation-grant/invalid-body`.
+ */
+export type MintGrantProps = MintGrantBaseProps & ReputationGrantTargetFilter;
 
 /**
  * Mints reputation — creates it from nothing, with no sender.

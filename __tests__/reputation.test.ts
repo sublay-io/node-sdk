@@ -3,6 +3,7 @@ import {
   mintGrant,
   listGrants,
 } from "../src/modules/reputation";
+import type { ReputationGrantTargetFilter } from "../src/interfaces/ReputationGrant";
 import { getMessage, listMessages } from "../src/modules/chat";
 import { makeClient } from "./helpers/mockClient";
 
@@ -240,5 +241,131 @@ describe("node-sdk reputation — nullability contract", () => {
     });
     const [, body] = projectInstance.post.mock.calls[0];
     expect(body).not.toHaveProperty("metadata");
+  });
+});
+
+describe("node-sdk reputation — target pair contract", () => {
+  // COMPILE-TIME assertions, checked by ts-jest's diagnostics. The server
+  // applies a shared `bothOrNeitherTarget` refinement to both write bodies and
+  // the equivalent rule to the list query, answering a half-filled target with
+  // `400 reputation-grant/invalid-body` / `invalid-filter`. The
+  // `@ts-expect-error` lines below fail this file's compile if anyone flattens
+  // `ReputationGrantTargetFilter` back into two independent optional fields.
+  it("rejects a half-filled target at compile time on createGrant", async () => {
+    const { client, projectInstance } = makeClient();
+
+    // @ts-expect-error targetType without targetId is a half-filled target.
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+      targetType: "entity",
+    });
+
+    // @ts-expect-error targetId without targetType is a half-filled target.
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+      targetId: "entity-1",
+    });
+
+    // Both keys omitted: the targetless grant, which is valid.
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+    });
+    const [, targetless] = projectInstance.post.mock.calls[2];
+    expect(targetless).not.toHaveProperty("targetType");
+    expect(targetless).not.toHaveProperty("targetId");
+
+    // The complete pair.
+    await createGrant(client, {
+      actingUserId: "sender-1",
+      recipientId: "recipient-1",
+      amount: 5,
+      targetType: "entity",
+      targetId: "entity-1",
+    });
+    const [, paired] = projectInstance.post.mock.calls[3];
+    expect(paired).toMatchObject({
+      targetType: "entity",
+      targetId: "entity-1",
+    });
+  });
+
+  it("rejects a half-filled target at compile time on mintGrant", async () => {
+    const { client, projectInstance } = makeClient();
+
+    // @ts-expect-error targetType without targetId is a half-filled target.
+    await mintGrant(client, {
+      recipientId: "recipient-1",
+      amount: 5,
+      targetType: "comment",
+    });
+
+    // @ts-expect-error targetId without targetType is a half-filled target.
+    await mintGrant(client, {
+      recipientId: "recipient-1",
+      amount: 5,
+      targetId: "comment-1",
+    });
+
+    await mintGrant(client, { recipientId: "recipient-1", amount: 5 });
+    await mintGrant(client, {
+      recipientId: "recipient-1",
+      amount: 5,
+      targetType: "comment",
+      targetId: "comment-1",
+    });
+    expect(projectInstance.post).toHaveBeenCalledTimes(4);
+  });
+
+  it("rejects a half-filled target at compile time on listGrants", async () => {
+    const { client, projectInstance } = makeClient();
+
+    // @ts-expect-error targetType without targetId is a half-filled target.
+    await listGrants(client, { targetType: "chat-message" });
+
+    // @ts-expect-error targetId without targetType is a half-filled target.
+    await listGrants(client, { targetId: "message-1" });
+
+    // A different filter shape with a stray half target is rejected too — the
+    // pairing rule is independent of which shape the caller meant to use.
+    // @ts-expect-error recipientId does not license a lone targetType.
+    await listGrants(client, { recipientId: "r1", targetType: "entity" });
+
+    await listGrants(client, { recipientId: "r1" });
+    await listGrants(client, {
+      targetType: "chat-message",
+      targetId: "message-1",
+    });
+    const [, complete] = projectInstance.get.mock.calls[4];
+    expect(complete.params).toMatchObject({
+      targetType: "chat-message",
+      targetId: "message-1",
+    });
+  });
+
+  it("lets a caller build the pair conditionally via the exported filter type", async () => {
+    // The documented escape hatch for the one shape the union makes awkward:
+    // an inline `...(item ? { targetType, targetId } : {})` widens both keys to
+    // `T | undefined` and matches neither branch, so name the type on a helper
+    // and spread that instead.
+    const { client, projectInstance } = makeClient();
+    const build = (item: { id: string } | null): ReputationGrantTargetFilter =>
+      item ? { targetType: "entity", targetId: item.id } : {};
+
+    await listGrants(client, { recipientId: "r1", ...build(null) });
+    await listGrants(client, { ...build({ id: "entity-1" }) });
+
+    expect(projectInstance.get.mock.calls[0][1].params).not.toHaveProperty(
+      "targetType"
+    );
+    expect(projectInstance.get.mock.calls[1][1].params).toMatchObject({
+      targetType: "entity",
+      targetId: "entity-1",
+    });
   });
 });

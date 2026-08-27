@@ -2,13 +2,13 @@ import { SublayHttpClient } from "../../core/client";
 import {
   GrantSummary,
   ReputationGrant,
-  ReputationGrantTargetType,
+  ReputationGrantTargetFilter,
 } from "../../interfaces/ReputationGrant";
 import { PaginatedResponse } from "../../interfaces/IPaginatedResponse";
 import { SpaceReputationContextParams } from "../../interfaces/SpaceReputation";
 import { buildSpaceReputationParams } from "../../core/spaceReputationParams";
 
-export interface ListGrantsProps extends SpaceReputationContextParams {
+interface ListGrantsBaseProps extends SpaceReputationContextParams {
   page?: number;
   limit?: number; // capped at 100 server-side
 
@@ -17,13 +17,22 @@ export interface ListGrantsProps extends SpaceReputationContextParams {
   recipientId?: string;
   /** What this user sent. */
   senderId?: string;
-  /** Who rewarded this item — supplied together with `targetId`. */
-  targetType?: ReputationGrantTargetType;
-  targetId?: string;
 
   /** Associations to expand. Only `"user"` is supported (hydrates both parties). */
   include?: string;
 }
+
+/**
+ * The third filter shape — "who rewarded this item" — is the
+ * {@link ReputationGrantTargetFilter} pair, so a half-filled target is a
+ * compile error rather than a `400 reputation-grant/invalid-filter`.
+ *
+ * Mutual exclusivity between the three shapes is NOT expressed in the type: a
+ * three-way exclusive union would multiply out across every pagination and
+ * space-reputation field and make the props unreadable, for a rule the server
+ * reports clearly. Only the both-or-neither pairing is typed.
+ */
+export type ListGrantsProps = ListGrantsBaseProps & ReputationGrantTargetFilter;
 
 /**
  * The `summary` block rides alongside the page envelope, and only on the
